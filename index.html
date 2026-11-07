@@ -1,0 +1,786 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="Lịch Việt - quản lý ngày sự kiện, nhắc nhở và xem lịch âm dương."
+    />
+    <meta name="theme-color" content="#f3eee4" />
+    <title>Lịch Việt — Nhịp ngày, trọn tháng</title>
+    <link rel="icon" type="image/svg+xml" href="favicon.svg?v=20261107p" />
+    <link rel="mask-icon" href="favicon.svg?v=20261107p" color="#164b3f" />
+    <link rel="apple-touch-icon" href="favicon.svg?v=20261107p" />
+
+    <!-- Chặn xem lịch khi chưa đăng nhập: ẩn trang ngay từ đầu để không nháy nội dung. -->
+    <style>
+      html.auth-checking body {
+        visibility: hidden;
+      }
+    </style>
+    <script src="auth.js?v=20261107p"></script>
+    <script>
+      (function () {
+        document.documentElement.classList.add("auth-checking");
+        try {
+          if (window.LVAuth && LVAuth.requireAuth()) {
+            document.documentElement.classList.remove("auth-checking");
+          }
+        } catch (error) {
+          // Nếu lớp đăng nhập lỗi, vẫn hiện trang thay vì treo màn hình trắng.
+          document.documentElement.classList.remove("auth-checking");
+        }
+      })();
+    </script>
+
+    <link rel="stylesheet" href="styles.css?v=20261107p" />
+    <script src="recurrence.js?v=20261107p" defer></script>
+    <script src="app.js?v=20261107p" defer></script>
+    <script src="nav.js?v=20261107p" defer></script>
+    <script src="sheets-config.js?v=20261107p" defer></script>
+    <script src="sheets-sync.js?v=20261107p" defer></script>
+  </head>
+  <body>
+    <a class="skip-link" href="#main-content" data-i18n="skipLink">Bỏ qua điều hướng</a>
+
+    <svg class="svg-sprite" aria-hidden="true">
+      <symbol id="icon-calendar" viewBox="0 0 24 24">
+        <path d="M7 3v3M17 3v3M4 9h16M5 5h14a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1Z" />
+        <path d="M8 13h2M14 13h2M8 17h2M14 17h2" />
+      </symbol>
+      <symbol id="icon-plus" viewBox="0 0 24 24">
+        <path d="M12 5v14M5 12h14" />
+      </symbol>
+      <symbol id="icon-chevron-left" viewBox="0 0 24 24">
+        <path d="m15 18-6-6 6-6" />
+      </symbol>
+      <symbol id="icon-chevron-right" viewBox="0 0 24 24">
+        <path d="m9 18 6-6-6-6" />
+      </symbol>
+      <symbol id="icon-bell" viewBox="0 0 24 24">
+        <path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9ZM10 21h4" />
+      </symbol>
+      <symbol id="icon-close" viewBox="0 0 24 24">
+        <path d="m6 6 12 12M18 6 6 18" />
+      </symbol>
+      <symbol id="icon-clock" viewBox="0 0 24 24">
+        <circle cx="12" cy="12" r="9" />
+        <path d="M12 7v5l3 2" />
+      </symbol>
+      <symbol id="icon-edit" viewBox="0 0 24 24">
+        <path d="m4 20 4.5-1 10-10a2.12 2.12 0 0 0-3-3l-10 10L4 20ZM14 7l3 3" />
+      </symbol>
+      <symbol id="icon-trash" viewBox="0 0 24 24">
+        <path d="M4 7h16M9 7V4h6v3M7 7l1 13h8l1-13M10 11v5M14 11v5" />
+      </symbol>
+      <symbol id="icon-search" viewBox="0 0 24 24">
+        <circle cx="10.5" cy="10.5" r="6.5" />
+        <path d="m15.5 15.5 5 5" />
+      </symbol>
+      <symbol id="icon-spark" viewBox="0 0 24 24">
+        <path d="M12 3c.7 4.8 3.2 7.3 8 8-4.8.7-7.3 3.2-8 8-.7-4.8-3.2-7.3-8-8 4.8-.7 7.3-3.2 8-8Z" />
+      </symbol>
+      <symbol id="icon-moon" viewBox="0 0 24 24">
+        <path d="M20 15.5A8.5 8.5 0 0 1 8.5 4 8.5 8.5 0 1 0 20 15.5Z" />
+      </symbol>
+      <symbol id="icon-check" viewBox="0 0 24 24">
+        <path d="m5 12 4 4L19 6" />
+      </symbol>
+      <symbol id="icon-more" viewBox="0 0 24 24">
+        <circle cx="5" cy="12" r="1" />
+        <circle cx="12" cy="12" r="1" />
+        <circle cx="19" cy="12" r="1" />
+      </symbol>
+      <symbol id="icon-language" viewBox="0 0 24 24">
+        <circle cx="12" cy="12" r="9" />
+        <path d="M3.5 9h17M3.5 15h17M12 3c2.3 2.5 3.4 5.5 3.4 9S14.3 18.5 12 21M12 3c-2.3 2.5-3.4 5.5-3.4 9s1.1 6.5 3.4 9" />
+      </symbol>
+      <symbol id="icon-logout" viewBox="0 0 24 24">
+        <path d="M15 4h3a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1h-3" />
+        <path d="m10 8 4 4-4 4" />
+        <path d="M14 12H3" />
+      </symbol>
+      <symbol id="icon-list" viewBox="0 0 24 24">
+        <path d="M8 6h13M8 12h13M8 18h13" />
+        <path d="M3.5 6h.01M3.5 12h.01M3.5 18h.01" />
+      </symbol>
+      <symbol id="icon-checklist" viewBox="0 0 24 24">
+        <path d="M10 6h10M10 12h10M10 18h10" />
+        <path d="m3 6 1.4 1.4L7 4.8" />
+        <path d="m3 12 1.4 1.4L7 10.8" />
+        <path d="m3 18 1.4 1.4L7 16.8" />
+      </symbol>
+      <symbol id="icon-note" viewBox="0 0 24 24">
+        <path d="M6 3h9l4 4v14H6z" />
+        <path d="M15 3v4h4" />
+        <path d="M9 12h7M9 16h5" />
+      </symbol>
+      <symbol id="icon-chart" viewBox="0 0 24 24">
+        <path d="M4 20V10M10 20V5M16 20v-8M22 20H2" />
+      </symbol>
+      <symbol id="icon-settings" viewBox="0 0 24 24">
+        <circle cx="12" cy="12" r="3" />
+        <path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M18.4 5.6l-2.1 2.1M7.7 16.3l-2.1 2.1" />
+      </symbol>
+      <symbol id="icon-menu" viewBox="0 0 24 24">
+        <path d="M4 7h16M4 12h16M4 17h16" />
+      </symbol>
+      <symbol id="icon-eye" viewBox="0 0 24 24">
+        <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z" />
+        <circle cx="12" cy="12" r="3" />
+      </symbol>
+    </svg>
+
+    <div class="page-shell">
+      <header class="topbar">
+        <a class="brand" href="#" aria-label="Lịch Việt - về trang chủ" data-i18n-aria="brandHomeLabel">
+          <span class="brand-mark" aria-hidden="true">
+            <svg class="icon icon-lg"><use href="#icon-calendar"></use></svg>
+          </span>
+          <span class="brand-copy">
+            <strong data-i18n="brandName">Lịch Việt</strong>
+            <small data-i18n="brandTagline">Nhịp ngày, trọn tháng</small>
+          </span>
+        </a>
+
+        <div class="topbar-actions">
+          <button
+            class="button button-quiet language-button"
+            id="language-button"
+            type="button"
+            aria-label="Chuyển sang tiếng Trung"
+            data-i18n-aria="languageAria"
+          >
+            <svg class="icon" aria-hidden="true"><use href="#icon-language"></use></svg>
+            <span id="language-label">中文</span>
+          </button>
+          <button
+            class="button button-quiet notification-button"
+            id="notification-button"
+            type="button"
+          >
+            <svg class="icon" aria-hidden="true"><use href="#icon-bell"></use></svg>
+            <span id="notification-label" data-i18n="notificationsEnable">Bật nhắc nhở</span>
+          </button>
+          <button
+            class="button button-quiet sheets-button"
+            id="sheets-open"
+            type="button"
+            data-state="off"
+            aria-label="Google Sheets: chưa kết nối. Mở cài đặt kết nối."
+            data-i18n-aria="sheetsButtonAria"
+          >
+            <svg class="icon icon-sm sheets-icon" aria-hidden="true"><use href="#icon-eye"></use></svg>
+            <span class="sheets-button-label" id="sheets-button-label" data-i18n="sheetsButton">Sheets</span>
+          </button>
+          <button
+            class="button button-primary"
+            id="open-create-modal"
+            type="button"
+            aria-label="Thêm sự kiện"
+            data-i18n-aria="addEvent"
+          >
+            <svg class="icon" aria-hidden="true"><use href="#icon-plus"></use></svg>
+            <span data-i18n="addEvent">Thêm sự kiện</span>
+          </button>
+        </div>
+      </header>
+
+      <nav class="app-nav" aria-label="Khu vực làm việc" data-i18n-aria="navAria" id="app-nav">
+        <button
+          class="nav-toggle"
+          id="nav-toggle"
+          type="button"
+          aria-expanded="false"
+          aria-controls="app-nav-list"
+        >
+          <span class="nav-toggle-label" id="nav-current">Lịch</span>
+          <span class="nav-toggle-icon" aria-hidden="true">
+            <svg class="icon icon-sm"><use href="#icon-menu"></use></svg>
+          </span>
+          <span class="sr-only" data-i18n="navMenu">Mở menu khu vực</span>
+        </button>
+        <ul class="app-nav-list" id="app-nav-list">
+          <li>
+            <a
+              class="nav-item is-active"
+              href="#/lich"
+              data-nav-item="lich"
+              data-ready="true"
+              aria-current="page"
+            >
+              <svg class="icon icon-sm" aria-hidden="true"><use href="#icon-calendar"></use></svg>
+              <span data-i18n="navCalendar">Lịch</span>
+            </a>
+          </li>
+          <li>
+            <a class="nav-item" href="#/cong-viec" data-nav-item="cong-viec" data-ready="false">
+              <svg class="icon icon-sm" aria-hidden="true"><use href="#icon-checklist"></use></svg>
+              <span data-i18n="navTasks">Công việc</span>
+              <span class="nav-badge" data-i18n="navSoon">Sắp có</span>
+            </a>
+          </li>
+          <li>
+            <a class="nav-item" href="#/ghi-chu" data-nav-item="ghi-chu" data-ready="false">
+              <svg class="icon icon-sm" aria-hidden="true"><use href="#icon-note"></use></svg>
+              <span data-i18n="navNotes">Ghi chú</span>
+              <span class="nav-badge" data-i18n="navSoon">Sắp có</span>
+            </a>
+          </li>
+          <li>
+            <a class="nav-item" href="#/bao-cao" data-nav-item="bao-cao" data-ready="false">
+              <svg class="icon icon-sm" aria-hidden="true"><use href="#icon-chart"></use></svg>
+              <span data-i18n="navReports">Báo cáo</span>
+              <span class="nav-badge" data-i18n="navSoon">Sắp có</span>
+            </a>
+          </li>
+          <li>
+            <a class="nav-item" href="#/cai-dat" data-nav-item="cai-dat" data-ready="false">
+              <svg class="icon icon-sm" aria-hidden="true"><use href="#icon-settings"></use></svg>
+              <span data-i18n="navSettings">Cài đặt</span>
+              <span class="nav-badge" data-i18n="navSoon">Sắp có</span>
+            </a>
+          </li>
+        </ul>
+      </nav>
+
+      <main id="main-content">
+        <section class="intro" aria-labelledby="page-title">
+          <div>
+            <p class="eyebrow" data-i18n="eyebrow">LỊCH DƯƠNG · LỊCH ÂM</p>
+            <h1 id="page-title" data-i18n="heroTitle">Mỗi ngày đều có một nhịp riêng.</h1>
+            <p class="intro-copy" data-i18n="heroDescription">
+              Sắp xếp cuộc hẹn, ngày kỷ niệm và những việc cần nhớ trên một cuốn lịch
+              Việt gần gũi.
+            </p>
+          </div>
+
+          <div class="month-summary" aria-label="Tổng quan tháng" data-i18n-aria="monthSummaryAria">
+            <div class="summary-item">
+              <span data-i18n="monthEventCount">Sự kiện tháng này</span>
+              <strong id="month-event-count">0</strong>
+            </div>
+            <div class="summary-divider" aria-hidden="true"></div>
+            <div class="summary-item">
+              <span data-i18n="nextEventLabel">Lần tới</span>
+              <strong id="next-event-summary" data-i18n="noneYet">Chưa có</strong>
+            </div>
+          </div>
+        </section>
+
+        <div class="workspace">
+          <section class="calendar-card" aria-labelledby="calendar-title">
+            <div class="calendar-toolbar">
+              <div>
+                <p class="calendar-kicker" id="calendar-lunar-year">ÂM LỊCH VIỆT NAM</p>
+                <h2 id="calendar-title">Tháng 10, 2026</h2>
+              </div>
+
+              <div class="calendar-controls">
+                <button
+                  class="icon-button"
+                  id="previous-month"
+                  type="button"
+                  aria-label="Tháng trước"
+                  data-i18n-aria="previousMonth"
+                >
+                  <svg class="icon" aria-hidden="true"><use href="#icon-chevron-left"></use></svg>
+                </button>
+                <button class="button button-small" id="go-today" type="button" data-i18n="today">Hôm nay</button>
+                <button
+                  class="icon-button"
+                  id="next-month"
+                  type="button"
+                  aria-label="Tháng sau"
+                  data-i18n-aria="nextMonth"
+                >
+                  <svg class="icon" aria-hidden="true"><use href="#icon-chevron-right"></use></svg>
+                </button>
+              </div>
+            </div>
+
+            <div class="calendar-actions">
+              <button class="button button-quiet button-small" id="view-all-events" type="button">
+                <svg class="icon icon-sm" aria-hidden="true"><use href="#icon-list"></use></svg>
+                <span data-i18n="viewAllEvents">Xem tất cả sự kiện</span>
+              </button>
+              <button class="text-button danger-link" id="clear-all-events" type="button" hidden>
+                <svg class="icon icon-sm" aria-hidden="true"><use href="#icon-trash"></use></svg>
+                <span data-i18n="clearAllEvents">Xoá toàn bộ sự kiện</span>
+              </button>
+            </div>
+
+            <div class="weekdays" aria-hidden="true">
+              <span data-weekday-index="0">Thứ 2</span>
+              <span data-weekday-index="1">Thứ 3</span>
+              <span data-weekday-index="2">Thứ 4</span>
+              <span data-weekday-index="3">Thứ 5</span>
+              <span data-weekday-index="4">Thứ 6</span>
+              <span data-weekday-index="5">Thứ 7</span>
+              <span data-weekday-index="6">Chủ nhật</span>
+            </div>
+
+            <div class="calendar-grid" id="calendar-grid" aria-label="Lịch tháng" data-i18n-aria="calendarAria"></div>
+
+            <div class="calendar-legend" aria-label="Chú thích" data-i18n-aria="legendAria">
+              <span><i class="legend-dot legend-dot-today"></i><span data-i18n="legendToday">Hôm nay</span></span>
+              <span><i class="legend-dot legend-dot-event"></i><span data-i18n="legendEvents">Có sự kiện</span></span>
+              <span><i class="legend-swatch-past"></i><span data-i18n="legendPast">Ngày đã qua</span></span>
+              <span><i class="legend-star" aria-hidden="true">✦</i><span data-i18n="legendHolidays">Lễ &amp; Tết</span></span>
+            </div>
+          </section>
+
+          <aside class="side-column">
+            <section class="today-card" aria-labelledby="selected-date-title">
+              <div class="today-card-header">
+                <span class="status-pill" id="selected-date-status">Hôm nay</span>
+                <svg class="icon decorative-icon" aria-hidden="true"><use href="#icon-spark"></use></svg>
+              </div>
+
+              <div class="selected-date-hero">
+                <span class="selected-day-number" id="selected-day-number">29</span>
+                <div>
+                  <h2 id="selected-date-title">Thứ Năm, 29 tháng 10</h2>
+                  <p id="selected-lunar-date">18 tháng 9 · Bính Ngọ</p>
+                </div>
+              </div>
+
+              <div class="selected-special" id="selected-special" hidden></div>
+
+              <div class="selected-agenda">
+                <div class="section-heading">
+                  <h3 data-i18n="dayAgenda">Lịch ngày này</h3>
+                  <button class="text-button" id="add-on-selected-date" type="button">
+                    <svg class="icon icon-sm" aria-hidden="true"><use href="#icon-plus"></use></svg>
+                    <span id="add-selected-label">Thêm</span>
+                  </button>
+                </div>
+                <div id="selected-events" class="agenda-list"></div>
+              </div>
+            </section>
+
+            <section class="upcoming-card" aria-labelledby="upcoming-title">
+              <div class="section-heading upcoming-heading">
+                <div>
+                  <p class="section-kicker" data-i18n="upcomingKicker">ĐỪNG BỎ LỠ</p>
+                  <h2 id="upcoming-title" data-i18n="upcomingTitle">Sắp tới</h2>
+                </div>
+                <span class="count-badge" id="upcoming-count">0</span>
+              </div>
+
+              <label class="search-field" for="event-search">
+                <svg class="icon" aria-hidden="true"><use href="#icon-search"></use></svg>
+                <span class="sr-only" data-i18n="searchLabel">Tìm sự kiện</span>
+                <input
+                  id="event-search"
+                  type="search"
+                  placeholder="Tìm sự kiện..."
+                  data-i18n-placeholder="searchPlaceholder"
+                  autocomplete="off"
+                />
+              </label>
+
+              <div class="upcoming-list" id="upcoming-list"></div>
+            </section>
+          </aside>
+        </div>
+      </main>
+
+      <footer class="page-footer">
+        <p data-i18n="storageNotice">Dữ liệu được lưu riêng trên trình duyệt của bạn.</p>
+        <p class="sheets-footer-status" id="sheets-footer-status" aria-live="polite" hidden></p>
+        <button
+          class="text-button auth-logout"
+          id="logout-button"
+          type="button"
+          title="Đăng xuất khỏi lịch"
+          onclick="if (window.LVAuth) LVAuth.signOut();"
+        >
+          <svg class="icon icon-sm" aria-hidden="true"><use href="#icon-logout"></use></svg>
+          <span class="auth-logout-label">Đăng xuất</span>
+        </button>
+      </footer>
+    </div>
+
+    <dialog class="modal" id="event-modal" aria-labelledby="event-modal-title">
+      <form class="modal-panel" id="event-form" novalidate>
+        <div class="modal-header">
+          <div>
+            <p class="section-kicker" id="modal-kicker">THÊM VÀO LỊCH</p>
+            <h2 id="event-modal-title">Sự kiện mới</h2>
+          </div>
+          <button class="icon-button modal-close" type="button" aria-label="Đóng" data-i18n-aria="close">
+            <svg class="icon" aria-hidden="true"><use href="#icon-close"></use></svg>
+          </button>
+        </div>
+
+        <div class="modal-body">
+          <div class="form-error-summary" id="form-error-summary" role="alert" hidden></div>
+          <input id="event-id" name="id" type="hidden" />
+
+          <div class="field">
+            <label for="event-title"><span data-i18n="eventTitleLabel">Tên sự kiện</span> <span aria-hidden="true">*</span></label>
+            <div class="title-input-group">
+              <span class="title-emoji-preview" id="event-emoji-preview" aria-hidden="true">📌</span>
+              <input
+                id="event-title"
+                name="title"
+                type="text"
+                maxlength="80"
+                placeholder="Ví dụ: Sinh nhật mẹ"
+                data-i18n-placeholder="eventTitlePlaceholder"
+                autocomplete="off"
+                required
+                aria-describedby="event-title-error"
+              />
+            </div>
+            <input id="event-emoji" name="emoji" type="hidden" value="📌" />
+            <div
+              class="emoji-picker"
+              id="emoji-picker"
+              role="group"
+              aria-label="Chọn biểu tượng cho sự kiện"
+              data-i18n-aria="emojiPickerAria"
+            >
+              <button class="emoji-option is-selected" type="button" data-emoji="📌" data-emoji-key="pin" aria-label="Chọn biểu tượng ghim" aria-pressed="true">📌</button>
+              <button class="emoji-option" type="button" data-emoji="🎉" data-emoji-key="party" aria-label="Chọn biểu tượng tiệc" aria-pressed="false">🎉</button>
+              <button class="emoji-option" type="button" data-emoji="💼" data-emoji-key="work" aria-label="Chọn biểu tượng công việc" aria-pressed="false">💼</button>
+              <button class="emoji-option" type="button" data-emoji="👨‍👩‍👧" data-emoji-key="family" aria-label="Chọn biểu tượng gia đình" aria-pressed="false">👨‍👩‍👧</button>
+              <button class="emoji-option" type="button" data-emoji="🎂" data-emoji-key="birthday" aria-label="Chọn biểu tượng sinh nhật" aria-pressed="false">🎂</button>
+              <button class="emoji-option" type="button" data-emoji="❤️" data-emoji-key="love" aria-label="Chọn biểu tượng yêu thương" aria-pressed="false">❤️</button>
+              <button class="emoji-option" type="button" data-emoji="🏥" data-emoji-key="health" aria-label="Chọn biểu tượng sức khỏe" aria-pressed="false">🏥</button>
+              <button class="emoji-option" type="button" data-emoji="📚" data-emoji-key="study" aria-label="Chọn biểu tượng học tập" aria-pressed="false">📚</button>
+              <button class="emoji-option" type="button" data-emoji="🍽️" data-emoji-key="meal" aria-label="Chọn biểu tượng ăn uống" aria-pressed="false">🍽️</button>
+              <button class="emoji-option" type="button" data-emoji="✈️" data-emoji-key="travel" aria-label="Chọn biểu tượng du lịch" aria-pressed="false">✈️</button>
+              <button class="emoji-option" type="button" data-emoji="🚗" data-emoji-key="car" aria-label="Chọn biểu tượng xe hơi" aria-pressed="false">🚗</button>
+              <button class="emoji-option" type="button" data-emoji="🏍️" data-emoji-key="motorbike" aria-label="Chọn biểu tượng xe máy" aria-pressed="false">🏍️</button>
+              <button class="emoji-option" type="button" data-emoji="💻" data-emoji-key="laptop" aria-label="Chọn biểu tượng máy tính xách tay" aria-pressed="false">💻</button>
+              <button class="emoji-option" type="button" data-emoji="📞" data-emoji-key="phone" aria-label="Chọn biểu tượng liên lạc" aria-pressed="false">📞</button>
+              <button class="emoji-option" type="button" data-emoji="⭐" data-emoji-key="important" aria-label="Chọn biểu tượng quan trọng" aria-pressed="false">⭐</button>
+            </div>
+            <p class="field-error" id="event-title-error"></p>
+          </div>
+
+          <div class="form-row">
+            <div class="field">
+              <label for="event-date"><span data-i18n="eventDateLabel">Ngày</span> <span aria-hidden="true">*</span></label>
+              <input
+                id="event-date"
+                name="date"
+                type="date"
+                required
+                aria-describedby="event-date-help event-date-error"
+              />
+              <p class="field-helper" id="event-date-help" data-i18n="dateHelper">Chỉ có thể tạo từ hôm nay.</p>
+              <p class="field-error" id="event-date-error"></p>
+            </div>
+            <div class="field">
+              <label for="event-time" data-i18n="eventTimeLabel">Giờ</label>
+              <input id="event-time" name="time" type="time" />
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="field">
+              <label for="event-end-date" data-i18n="endDateLabel">Đến ngày</label>
+              <input
+                id="event-end-date"
+                name="endDate"
+                type="date"
+                aria-describedby="event-end-date-help event-end-date-error"
+              />
+              <p class="field-helper" id="event-end-date-help" data-i18n="endDateHelper">
+                Để trống nếu sự kiện chỉ diễn ra trong một ngày.
+              </p>
+              <p class="field-error" id="event-end-date-error"></p>
+            </div>
+            <div class="field">
+              <label for="event-repeat" data-i18n="repeatLabel">Lặp lại</label>
+              <select id="event-repeat" name="repeat">
+                <option value="none" data-i18n="repeatNone">Không lặp</option>
+                <option value="solar" data-i18n="repeatSolar">Hằng năm · theo dương lịch</option>
+                <option value="lunar" data-i18n="repeatLunar">Hằng năm · theo âm lịch</option>
+              </select>
+            </div>
+          </div>
+          <p class="field-helper" data-i18n="repeatHelper">
+            Sinh nhật theo dương lịch chọn dương lịch; giỗ theo âm lịch chọn âm lịch.
+          </p>
+          <p class="repeat-preview" id="event-repeat-preview" aria-live="polite" hidden></p>
+
+          <div class="lunar-preview" aria-live="polite">
+            <svg class="icon" aria-hidden="true"><use href="#icon-moon"></use></svg>
+            <div>
+              <span data-i18n="lunarDateLabel">Ngày âm lịch</span>
+              <strong id="modal-lunar-preview" data-i18n="lunarPlaceholder">Chọn ngày để xem âm lịch</strong>
+            </div>
+          </div>
+
+          <fieldset class="field category-field">
+            <legend data-i18n="categoryLabel">Nhóm sự kiện</legend>
+            <div class="category-options" id="category-options">
+              <label class="category-option">
+                <input type="radio" name="category" value="work" checked />
+                <span><i class="category-dot category-work"></i><span data-i18n="categoryWork">Công việc</span></span>
+              </label>
+              <label class="category-option">
+                <input type="radio" name="category" value="family" />
+                <span><i class="category-dot category-family"></i><span data-i18n="categoryFamily">Gia đình</span></span>
+              </label>
+              <label class="category-option">
+                <input type="radio" name="category" value="personal" />
+                <span><i class="category-dot category-personal"></i><span data-i18n="categoryPersonal">Cá nhân</span></span>
+              </label>
+              <label class="category-option">
+                <input type="radio" name="category" value="celebration" />
+                <span><i class="category-dot category-celebration"></i><span data-i18n="categoryCelebration">Kỷ niệm</span></span>
+              </label>
+            </div>
+          </fieldset>
+
+          <div class="field">
+            <label for="event-note" data-i18n="noteLabel">Ghi chú</label>
+            <textarea
+              id="event-note"
+              name="note"
+              rows="3"
+              maxlength="240"
+              placeholder="Thêm địa điểm, người tham dự hoặc điều cần chuẩn bị..."
+              data-i18n-placeholder="notePlaceholder"
+            ></textarea>
+          </div>
+
+          <div class="field">
+            <label for="event-reminder" data-i18n="reminderLabel">Nhắc trước</label>
+            <select id="event-reminder" name="reminder">
+              <option value="0" data-i18n="reminderNow">Đúng giờ</option>
+              <option value="15" data-i18n="reminder15">15 phút</option>
+              <option value="60" selected data-i18n="reminder60">1 giờ</option>
+              <option value="1440" data-i18n="reminderDay">1 ngày</option>
+              <option value="none" data-i18n="reminderNone">Không nhắc</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button class="button button-danger button-delete" id="delete-event-button" type="button" hidden>
+            <svg class="icon" aria-hidden="true"><use href="#icon-trash"></use></svg>
+            <span data-i18n="delete">Xoá</span>
+          </button>
+          <div class="modal-footer-actions">
+            <button class="button button-quiet modal-cancel" type="button" data-i18n="cancel">Huỷ</button>
+            <button class="button button-primary" id="save-event-button" type="submit">
+              <svg class="icon" aria-hidden="true"><use href="#icon-check"></use></svg>
+              <span data-i18n="saveEvent">Lưu sự kiện</span>
+            </button>
+          </div>
+        </div>
+      </form>
+    </dialog>
+
+    <dialog class="confirm-modal" id="confirm-modal" aria-labelledby="confirm-title">
+      <div class="confirm-panel">
+        <span class="confirm-icon" aria-hidden="true">
+          <svg class="icon icon-lg"><use href="#icon-trash"></use></svg>
+        </span>
+        <h2 id="confirm-title" data-i18n="confirmDeleteTitle">Xoá sự kiện này?</h2>
+        <p id="confirm-description" data-i18n="confirmDeleteDescription">Sự kiện sẽ biến mất khỏi lịch và không thể hoàn tác.</p>
+        <div class="confirm-password" id="confirm-password-field" hidden>
+          <label for="confirm-password" data-i18n="clearPasswordLabel">Nhập mật khẩu để xoá toàn bộ</label>
+          <input
+            id="confirm-password"
+            type="password"
+            autocomplete="current-password"
+            aria-describedby="confirm-password-help confirm-password-error"
+            placeholder="••••••••"
+          />
+          <p class="field-helper" id="confirm-password-help" data-i18n="clearPasswordHelp">
+            Cần mật khẩu quản trị để xoá toàn bộ sự kiện.
+          </p>
+          <p class="field-error" id="confirm-password-error" role="alert"></p>
+        </div>
+        <div class="confirm-actions">
+          <button class="button button-quiet" id="cancel-delete" type="button" data-i18n="keep">Giữ lại</button>
+          <button class="button button-danger" id="confirm-delete" type="button" data-i18n="deleteEvent">Xoá sự kiện</button>
+        </div>
+      </div>
+    </dialog>
+
+    <dialog class="modal sheets-modal" id="sheets-modal" aria-labelledby="sheets-modal-title">
+      <div class="modal-panel">
+        <div class="modal-header">
+          <div>
+            <p class="section-kicker" data-i18n="sheetsKicker">DỮ LIỆU</p>
+            <h2 id="sheets-modal-title" data-i18n="sheetsDialogTitle">Kết nối Google Sheets</h2>
+          </div>
+          <button
+            class="icon-button"
+            id="sheets-close-btn"
+            type="button"
+            aria-label="Đóng"
+            data-i18n-aria="close"
+          >
+            <svg class="icon" aria-hidden="true"><use href="#icon-close"></use></svg>
+          </button>
+        </div>
+
+        <div class="modal-body">
+          <div class="sheets-status-card">
+            <span class="sheets-dot" id="sheets-dialog-dot" data-state="off" aria-hidden="true"></span>
+            <div class="sheets-status-copy">
+              <strong id="sheets-status-text">Chưa kết nối</strong>
+              <small id="sheets-status-meta">Dữ liệu đang lưu trên trình duyệt này.</small>
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="sheets-endpoint" data-i18n="sheetsEndpointLabel">URL Web App (/exec)</label>
+            <input
+              id="sheets-endpoint"
+              type="url"
+              inputmode="url"
+              spellcheck="false"
+              autocomplete="off"
+              placeholder="https://script.google.com/macros/s/…/exec"
+            />
+          </div>
+
+          <div class="field">
+            <label for="sheets-token" data-i18n="sheetsTokenLabel">API token</label>
+            <input id="sheets-token" type="text" spellcheck="false" autocomplete="off" />
+            <p class="field-helper" data-i18n="sheetsTokenHelp">
+              Chuỗi API_TOKEN in ra trong Execution log khi bạn chạy hàm setup().
+            </p>
+          </div>
+
+          <div class="sheets-actions">
+            <button class="button button-primary" id="sheets-save" type="button" data-i18n="sheetsSaveConfig">
+              Lưu &amp; kiểm tra
+            </button>
+            <button class="button button-quiet" id="sheets-sync" type="button" data-i18n="sheetsSyncNow">
+              Đồng bộ ngay
+            </button>
+          </div>
+
+          <div class="sheets-export">
+            <p class="section-kicker" data-i18n="sheetsExportKicker">XUẤT DỮ LIỆU</p>
+            <div class="sheets-actions">
+              <button class="button button-quiet" id="sheets-export-csv" type="button" data-i18n="sheetsExportCsv">
+                Xuất CSV
+              </button>
+              <button class="button button-quiet" id="sheets-export-json" type="button" data-i18n="sheetsExportJson">
+                Xuất JSON
+              </button>
+              <a
+                class="button button-quiet"
+                id="sheets-open-sheet"
+                href="#"
+                target="_blank"
+                rel="noopener"
+                hidden
+                data-i18n="sheetsOpenSheet"
+                >Mở Google Sheet</a
+              >
+            </div>
+          </div>
+
+          <details class="sheets-help">
+            <summary data-i18n="sheetsHelpTitle">Cài đặt trong 4 bước</summary>
+            <ol>
+              <li data-i18n="sheetsHelpStep1">Tạo Google Sheet mới → Tiện ích mở rộng → Apps Script.</li>
+              <li data-i18n="sheetsHelpStep2">
+                Dán nội dung file Code.gs, chạy hàm setup() rồi lấy API_TOKEN trong log.
+              </li>
+              <li data-i18n="sheetsHelpStep3">
+                Deploy → New deployment → Web app: Execute as “Me”, Who has access “Anyone”; copy URL kết
+                thúc bằng /exec.
+              </li>
+              <li data-i18n="sheetsHelpStep4">Dán URL và token vào đây, bấm “Lưu &amp; kiểm tra”.</li>
+            </ol>
+          </details>
+        </div>
+
+        <div class="modal-footer">
+          <button
+            class="button button-danger"
+            id="sheets-disconnect"
+            type="button"
+            hidden
+            data-i18n="sheetsDisconnect"
+          >
+            Ngắt kết nối
+          </button>
+          <div class="modal-footer-actions">
+            <button class="button button-quiet" id="sheets-cancel-btn" type="button" data-i18n="cancel">
+              Huỷ
+            </button>
+          </div>
+        </div>
+      </div>
+    </dialog>
+
+    <dialog class="modal all-events-modal" id="all-events-modal" aria-labelledby="all-events-title">
+      <div class="modal-panel">
+        <div class="modal-header">
+          <div>
+            <p class="section-kicker" data-i18n="allEventsKicker">DANH SÁCH</p>
+            <h2 id="all-events-title" data-i18n="allEventsTitle">Tất cả sự kiện</h2>
+          </div>
+          <button class="icon-button" id="all-events-close" type="button" aria-label="Đóng" data-i18n-aria="close">
+            <svg class="icon" aria-hidden="true"><use href="#icon-close"></use></svg>
+          </button>
+        </div>
+
+        <div class="modal-body">
+          <p class="all-events-summary" id="all-events-summary"></p>
+          <div class="table-legend" aria-hidden="true">
+            <span class="legend-item"><i class="legend-chip is-today"></i><span data-i18n="statusToday">Hôm nay</span></span>
+            <span class="legend-item"><i class="legend-chip is-future"></i><span data-i18n="statusFuture">Sắp tới</span></span>
+            <span class="legend-item"><i class="legend-chip is-past"></i><span data-i18n="statusPast">Đã qua</span></span>
+          </div>
+
+          <div class="table-scroll">
+            <table class="events-table">
+              <thead>
+                <tr>
+                  <th scope="col" data-i18n="colTitle">Tên sự kiện</th>
+                  <th scope="col" class="col-date">
+                    <button class="table-sort" id="sort-by-date" type="button" title="Sắp xếp theo ngày">
+                      <span data-i18n="colDate">Ngày</span>
+                      <span class="sort-arrow" id="sort-date-arrow" aria-hidden="true">↑</span>
+                    </button>
+                  </th>
+                  <th scope="col" data-i18n="colTime">Giờ</th>
+                  <th scope="col" data-i18n="colCategory">Nhóm</th>
+                  <th scope="col" data-i18n="colRepeat">Lặp</th>
+                  <th scope="col" class="col-status">
+                    <button class="table-sort" id="sort-by-status" type="button" title="Sắp xếp theo trạng thái">
+                      <span data-i18n="colStatus">Trạng thái</span>
+                      <span class="sort-arrow" id="sort-status-arrow" aria-hidden="true"></span>
+                    </button>
+                  </th>
+                </tr>
+              </thead>
+              <tbody id="all-events-rows"></tbody>
+            </table>
+          </div>
+
+          <p class="all-events-empty" id="all-events-empty" data-i18n="allEventsEmpty" hidden>
+            Chưa có sự kiện nào.
+          </p>
+        </div>
+
+        <div class="modal-footer">
+          <div class="modal-footer-actions">
+            <button class="button button-quiet" id="all-events-done" type="button" data-i18n="doneBtn">
+              Xong
+            </button>
+          </div>
+        </div>
+      </div>
+    </dialog>
+
+    <div class="toast-region" id="toast-region" aria-live="polite" aria-atomic="true"></div>
+  </body>
+</html>
